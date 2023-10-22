@@ -124,7 +124,7 @@ public class ReportAggregateMojo extends AbstractReportMojo {
 		}
 	}
 
-	private void loadExecutionData(final ReportSupport support,
+	protected void loadExecutionData(final ReportSupport support,
 			final FileFilter filter, final File basedir) throws IOException {
 		for (final File execFile : filter.getFiles(basedir)) {
 			support.loadExecutionData(execFile);
@@ -150,7 +150,7 @@ public class ReportAggregateMojo extends AbstractReportMojo {
 		}
 	}
 
-	private void processProject(final ReportSupport support,
+	protected void processProject(final ReportSupport support,
 			final IReportGroupVisitor group, final MavenProject project)
 			throws IOException {
 		support.processProject(group, project.getArtifactId(), project,
