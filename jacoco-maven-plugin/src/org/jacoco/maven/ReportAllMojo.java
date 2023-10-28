@@ -14,45 +14,51 @@ package org.jacoco.maven;
 
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.project.MavenProject;
-import org.jacoco.report.IReportGroupVisitor;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Mojo(name = "report-all", threadSafe = true, inheritByDefault = false, aggregator = true)
-public class ReportAllMojo extends ReportAggregateMojo {
+public class ReportAllMojo extends AbstractMultiModulesReportMojo {// ReportAggregateMojo
 
-	@Override
-	void loadExecutionData(ReportSupport support) throws IOException {
-
-		// https://issues.apache.org/jira/browse/MNG-5440
-		if (dataFileIncludes == null) {
-			dataFileIncludes = Arrays.asList("target/jacoco.exec");
-		}
-
-		final FileFilter filter = new FileFilter(dataFileIncludes,
-				dataFileExcludes);
-		loadExecutionData(support, filter, project.getBasedir());
+	protected boolean isIncludeCurrentProject() {
+		return false;
 	}
 
 	@Override
-	void createReport(final IReportGroupVisitor visitor,
-			final ReportSupport support) throws IOException {
-		final IReportGroupVisitor group = visitor.visitGroup(title);
-		Predicate<MavenProject> projectFilter = mp -> mp.getCompileSourceRoots()
-				.stream().map(File::new).allMatch(File::exists);
-		for (final MavenProject subProject : eligibleProjects(projectFilter)) {
-			processProject(support, group, subProject);
-		}
+	String getDefaultDataFileIncludeExpression() {
+		return "target/jacoco.exec";
+	}
+
+	@Override
+	List<MavenProject> getExecutionDataProjects() {
+		return eligibleProjects(getExecutionDataProjectPredicate());
+	}
+
+	@Override
+	List<MavenProject> getReportProjects() {
+		return eligibleProjects(getReportProjectPredicate());
+	}
+
+	private Predicate<MavenProject> getExecutionDataProjectPredicate() {
+		return mp -> mp.equals(project);
+	}
+
+	private Predicate<MavenProject> getReportProjectPredicate() {
+		return mp -> mp.getCompileSourceRoots().stream().map(File::new)
+				.allMatch(File::exists);
 	}
 
 	List<MavenProject> eligibleProjects(Predicate<MavenProject> filter) {
 		return project.getCollectedProjects().stream().filter(filter)
 				.collect(Collectors.toList());
+	}
+
+	public String getName(final Locale locale) {
+		return "JaCoCo All";
 	}
 
 }
